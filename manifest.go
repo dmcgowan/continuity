@@ -4,7 +4,7 @@ import (
 	"os"
 	"sort"
 
-	pb "github.com/stevvooe/continuity/proto"
+	pb "github.com/dmcgowan/continuity/proto"
 )
 
 // BuildManifest creates the manifest for the given context
