@@ -232,11 +232,29 @@ func (c *context) Verify(resource Resource) error {
 
 	switch r := resource.(type) {
 	case RegularFile:
-		// TODO(stevvooe): We need to grab a target for each path, since a
-		// regular file may be a hardlink. Effectively, we must use t.Paths()
-		// somewhere in here.
 		if len(r.Paths()) > 1 {
-			panic("not implemented")
+			paths := r.Paths()
+			refPath, err := c.fullpath(paths[0])
+			if err != nil {
+				return err
+			}
+			refStat, err := c.driver.Lstat(refPath)
+			if err != nil {
+				return err
+			}
+			for i := range paths[1:] {
+				linkPath, err := c.fullpath(paths[i])
+				if err != nil {
+					return err
+				}
+				linkStat, err := c.driver.Lstat(linkPath)
+				if err != nil {
+					return err
+				}
+				if !os.SameFile(refStat, linkStat) {
+					return fmt.Errorf("resource %q target not missing hardlinks")
+				}
+			}
 		}
 
 		// TODO(stevvooe): Another reason to use a record-based approach. We
@@ -270,6 +288,8 @@ func (c *context) Verify(resource Resource) error {
 		if t.Target() != r.Target() {
 			return fmt.Errorf("resource %q target has mismatched target: %q != %q", t.Target(), r.Target())
 		}
+	case NamedPipe, Device:
+		// nothing to be done here.
 	default:
 		return fmt.Errorf("cannot verify resource: %v", resource)
 	}

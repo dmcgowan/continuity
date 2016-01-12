@@ -144,10 +144,9 @@ func TestWalkFS(t *testing.T) {
 
 	MarshalText(os.Stdout, m)
 
-	// TODO(dmcgowan): always verify, currently hard links not supported
-	//if err := VerifyManifest(ctx, m); err != nil {
-	//	t.Fatalf("error verifying manifest: %v")
-	//}
+	if err := VerifyManifest(ctx, m); err != nil {
+		t.Fatalf("error verifying manifest: %v", err)
+	}
 
 	expectedResources, err := expectedResourceList(testResources)
 	if err != nil {
