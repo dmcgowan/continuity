@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/golang/protobuf/proto"
@@ -117,6 +118,44 @@ func BuildManifest(ctx Context) (*Manifest, error) {
 	return &Manifest{
 		Resources: resources,
 	}, nil
+}
+
+func MergeOverlayManifest(manifest *Manifest, diff *Manifest) *Manifest {
+	resources := append(manifest.Resources, diff.Resources...)
+	sort.Stable(ByPath(resources))
+
+	excludePath := ""
+	filtered := make([]Resource, 0, len(resources))
+	for i := 0; i < len(resources); i++ {
+		if excludePath != "" && filepath.HasPrefix(resources[i].Path(), excludePath) {
+			continue
+		}
+		excludePath = ""
+		for i < len(resources)-1 && resources[i].Path() == resources[i+1].Path() {
+			// Always use last resource with the same path name
+			i++
+		}
+		switch resource := resources[i].(type) {
+		case Directory:
+			if xattr, ok := resource.XAttrs()["trusted.overlay.opaque"]; ok {
+				if len(xattr) == 1 && xattr[0] == 'y' {
+					excludePath = resource.Path()
+					continue
+				}
+			}
+
+		case Device:
+			if resource.Major() == 0 && resource.Minor() == 0 {
+				excludePath = resource.Path()
+				continue
+			}
+		}
+		filtered = append(filtered, resources[i])
+	}
+
+	return &Manifest{
+		Resources: filtered,
+	}
 }
 
 // VerifyManifest verifies all the resources in a manifest
