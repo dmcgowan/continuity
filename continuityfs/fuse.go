@@ -3,6 +3,7 @@ package continuityfs
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -116,13 +117,15 @@ func (f *File) getDirent(name string) (fuse.Dirent, error) {
 }
 
 type fileHandler struct {
-	reader readSeekCloser
+	reader io.ReadCloser
 }
 
 func (h *fileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
-	if _, err := h.reader.Seek(req.Offset, os.SEEK_SET); err != nil {
-		logrus.Debugf("Error seeking: %v", err)
-		return err
+	if seeker, ok := h.reader.(io.Seeker); ok {
+		if _, err := seeker.Seek(req.Offset, os.SEEK_SET); err != nil {
+			logrus.Debugf("Error seeking: %v", err)
+			return err
+		}
 	}
 
 	n, err := h.reader.Read(resp.Data[:req.Size])
