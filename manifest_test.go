@@ -215,6 +215,7 @@ type dresource struct {
 	uid          int
 	gid          int
 	major, minor int
+	xattrs       map[string][]byte
 }
 
 func generateTestFiles(t *testing.T, root string, resources []dresource) {
@@ -319,10 +320,11 @@ func expectedResourceList(resources []dresource) ([]Resource, error) {
 		case rfile:
 			f := &regularFile{
 				resource: resource{
-					paths: []string{absPath},
-					mode:  r.mode,
-					uid:   uidStr,
-					gid:   gidStr,
+					paths:  []string{absPath},
+					mode:   r.mode,
+					uid:    uidStr,
+					gid:    gidStr,
+					xattrs: r.xattrs,
 				},
 				size:    int64(r.size),
 				digests: []digest.Digest{r.digest},
@@ -332,10 +334,11 @@ func expectedResourceList(resources []dresource) ([]Resource, error) {
 		case rdirectory:
 			d := &directory{
 				resource: resource{
-					paths: []string{absPath},
-					mode:  r.mode,
-					uid:   uidStr,
-					gid:   gidStr,
+					paths:  []string{absPath},
+					mode:   r.mode,
+					uid:    uidStr,
+					gid:    gidStr,
+					xattrs: r.xattrs,
 				},
 			}
 			resourceMap[absPath] = d
