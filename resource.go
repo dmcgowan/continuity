@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/docker/distribution/digest"
 	pb "github.com/stevvooe/continuity/proto"
@@ -58,6 +59,9 @@ type RegularFile interface {
 
 	Size() int64
 	Digests() []digest.Digest
+
+	ModTime() time.Time
+	AccessTime() time.Time
 }
 
 // Merge two or more Resources into new file. Typically, this should be
@@ -242,6 +246,8 @@ type resource struct {
 	mode     os.FileMode
 	uid, gid string
 	xattrs   map[string][]byte
+	mtime    time.Time
+	atime    time.Time
 }
 
 var _ Resource = &resource{}
@@ -280,6 +286,14 @@ func (r *resource) UID() string {
 
 func (r *resource) GID() string {
 	return r.gid
+}
+
+func (r *resource) ModTime() time.Time {
+	return r.mtime
+}
+
+func (r *resource) AccessTime() time.Time {
+	return r.atime
 }
 
 type regularFile struct {
