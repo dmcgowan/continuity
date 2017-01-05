@@ -72,7 +72,7 @@ func (tc *TarContext) AddTarHeader(h *tar.Header, dgsts []digest.Digest) error {
 		})
 	case tar.TypeDir:
 		r.mode |= os.ModeDir
-		tc.resources = append(tc.resources, &directory{r})
+		tc.resources = append(tc.resources, &directory{r, false})
 	case tar.TypeLink:
 		tc.hardLinks = append(tc.hardLinks, hardLink{
 			source: h.Name,
