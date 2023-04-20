@@ -71,6 +71,10 @@ func copyFileContent(dst, src *os.File) error {
 func copyXAttrs(dst, src string, excludes map[string]struct{}, errorHandler XAttrErrorHandler) error {
 	xattrKeys, err := sysx.LListxattr(src)
 	if err != nil {
+		if os.IsPermission(err) {
+			// On darwin, character devices do not permit listing xattrs
+			return nil
+		}
 		e := fmt.Errorf("failed to list xattrs on %s: %w", src, err)
 		if errorHandler != nil {
 			e = errorHandler(dst, src, "", e)
